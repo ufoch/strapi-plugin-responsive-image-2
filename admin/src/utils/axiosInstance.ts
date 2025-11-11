@@ -6,11 +6,19 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   async (config: any) => {
-    const decodedCookieStorage = decodeURIComponent(document.cookie);
-    const token = decodedCookieStorage
-      .split('; ')
-      .find((row) => row.startsWith('jwtToken='))
-      ?.split('=')[1];
+    let token = localStorage.getItem('accessToken'); // For session management mode
+
+    const jwtTokenKey = 'jwtToken';
+    if (!token) {
+      token = localStorage.getItem(jwtTokenKey);
+    }
+    if (!token) {
+      const decodedCookieStorage = decodeURIComponent(document.cookie);
+      token = decodedCookieStorage
+        .split('; ')
+        .find((row) => row.startsWith(`${jwtTokenKey}=`))
+        ?.split('=')[1];
+    }
 
     config.headers = {
       Authorization: `Bearer ${token?.replace(/^"(.*)"$/, '$1')}`,
