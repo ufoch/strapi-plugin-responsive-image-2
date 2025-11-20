@@ -37,6 +37,7 @@ For configuration, there are [global options](https://github.com/nicolashmln/str
 - Uses the new [strapi plugin SDK](https://docs.strapi.io/cms/plugins-development/plugin-sdk)
 - Included fix for broken global quality setting (see [this issue](https://github.com/nicolashmln/strapi-plugin-responsive-image/issues/49))
 - Added german UI translations
+- A configured format with width 1 triggers a minimal format with the original image dimensions, if the original image's width is smaller than all other configured format's widths
 
 ## Known issues
 
