@@ -102,30 +102,42 @@ const generateResponsiveFormats = async (file) => {
 
   const { formats, quality, progressive } = await getService('responsive-image').getSettings();
 
+  const minFormat = formats
+    .filter((format) => format.width > 1)
+    .reduce((min, current) => (current.width <= min.width ? current : min));
+
   const x2Formats = [];
   const x1Formats = formats.map((format) => {
     if (format.x2) {
       x2Formats.push(
-        generateBreakpoint(`${format.name}_x2`, {
-          file,
-          format: {
-            ...format,
-            width: format.width * 2,
-            height: format.height ? format.height * 2 : null,
+        generateBreakpoint(
+          `${format.name}_x2`,
+          {
+            file,
+            format: {
+              ...format,
+              width: format.width * 2,
+              height: format.height ? format.height * 2 : null,
+            },
+            quality,
+            progressive,
+            autoOrientation,
           },
-          quality,
-          progressive,
-          autoOrientation,
-        })
+          minFormat
+        )
       );
     }
-    return generateBreakpoint(format.name, {
-      file,
-      format,
-      quality,
-      progressive,
-      autoOrientation,
-    });
+    return generateBreakpoint(
+      format.name,
+      {
+        file,
+        format,
+        quality,
+        progressive,
+        autoOrientation,
+      },
+      minFormat
+    );
   });
 
   return Promise.all([...x1Formats, ...x2Formats]);
@@ -139,11 +151,22 @@ const getFileExtension = (file, { convertToFormat }) => {
   return `.${convertToFormat}`;
 };
 
-const generateBreakpoint = async (key, { file, format, quality, progressive, autoOrientation }) => {
+const generateBreakpoint = async (
+  key,
+  { file, format, quality, progressive, autoOrientation },
+  minFormat
+) => {
   const fileMetaData = (await getMetadata(file)) as any;
 
   // "Min" formats
-  if (format.width === 1) format.width = fileMetaData.width;
+  if (format.width === 1) {
+    if (fileMetaData.width < minFormat.width) {
+      // Only created, if there's no other matching format
+      format.width = fileMetaData.width;
+    } else {
+      return;
+    }
+  }
 
   if (
     (format.withoutEnlargement && fileMetaData.width >= format.width) ||
