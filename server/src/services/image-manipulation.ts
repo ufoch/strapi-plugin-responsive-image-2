@@ -102,9 +102,13 @@ const generateResponsiveFormats = async (file) => {
 
   const { formats, quality, progressive } = await getService('responsive-image').getSettings();
 
-  const minFormat = formats
-    .filter((format) => format.width > 1)
-    .reduce((min, current) => (current.width <= min.width ? current : min));
+  let minFormat;
+  const testableFormats = formats.filter((format) => format.width > 1);
+  if (testableFormats.length > 1) {
+    minFormat = testableFormats.reduce((min, current) =>
+      current.width <= min.width ? current : min
+    );
+  }
 
   const x2Formats = [];
   const x1Formats = formats.map((format) => {
@@ -160,7 +164,7 @@ const generateBreakpoint = async (
 
   // "Min" formats
   if (format.width === 1) {
-    if (fileMetaData.width < minFormat.width) {
+    if (typeof minFormat === 'undefined' || fileMetaData.width < minFormat.width) {
       // Only created, if there's no other matching format
       format.width = fileMetaData.width;
     } else {
